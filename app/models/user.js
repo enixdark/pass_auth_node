@@ -1,6 +1,12 @@
 let mongoose = require('mongoose')
 let crypto = require('crypto')
+let mongoosePaginate = require('mongoose-paginate')
+mongoosePaginate.paginate.options = { 
+  lean:  true,
+  limit: 20
+}
 const PEPPER = 'salt'
+
 let userSchema = mongoose.Schema({
   local: {
     email: {type: String, default: null},
@@ -11,27 +17,33 @@ let userSchema = mongoose.Schema({
     id: {type: String, default: null},
     token: {type: String, default: null},
     email: {type: String, default: null},
-    name: {type: String, default: null}
+    name: {type: String, default: null},
+    secret: {type: String, default: null}
   },
   linkedin: {
     id: {type: String, default: null},
     token: {type: String, default: null},
     email: {type: String, default: null},
-    name: {type: String, default: null}
+    name: {type: String, default: null},
+    secret: {type: String, default: null}
   },
   twitter: {
     id: {type: String, default: null},
     token: {type: String, default: null},
     email: {type: String, default: null},
-    name: {type: String, default: null}
+    name: {type: String, default: null},
+    secret: {type: String, default: null}    
   },
   google: {
     id: {type: String, default: null},
     token: {type: String, default: null},
     email: {type: String, default: null},
-    name: {type: String, default: null}
+    name: {type: String, default: null},
+    secret: {type: String, default: null}
   }
 })
+
+userSchema.plugin(mongoosePaginate)
 
 userSchema.methods.generateHash = async function(password) {
   let hash = await crypto.promise.pbkdf2(password, PEPPER, 4096, 512, 'sha256')

@@ -63,19 +63,18 @@ function loadPassportStrategy(OauthStrategy, config, userField) {
       // 3. If req.user !exist, we're authenticating (logging in an existing user)
       // 3a. If Step 1 failed (existing user for 3rd party account does not already exist), create a user and link this account (Otherwise, user is logging in).
       // 3c. Return user
-      debugger
       let user = req.user
       if(!user){
         let field = `${userField}.id`
         user = await User.promise.findOne({[field]: account.id})
       }
       user = user ? user : new User()
-      debugger
       user[userField] = {
         email: account.email ? account.email : "email@gmail.com",
         name: account.displayName,
         id:  account.id,
-        token: token
+        token: token,
+        secret: _ignored_
       }
       return await user.save()
   }

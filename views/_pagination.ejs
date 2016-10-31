@@ -1,0 +1,18 @@
+<% if (paginate.hasPreviousPages() || paginate.hasNextPages(pageCount)) { %>
+  <div class="navigation. well-sm" id="pagination">
+    <ul class="pager">
+      <% if (paginate.hasPreviousPages) { %>
+        <li class="previous">
+          <a href=<%= paginate.href(true) %> class="prev" %>
+            <div class="i fa fa-arrow-circle-left">
+            <p>Previous</p>d
+            </div>
+          </a>
+        </li>
+      <% } %>
+
+     
+
+    </ul>
+  </div>
+<% } %>
