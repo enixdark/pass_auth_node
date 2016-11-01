@@ -1,0 +1,21 @@
+version: '2'
+services:
+  node-server:
+    build: .
+    environment:
+      - MONGODB_URI=mongo://root:root@mongodb:27017/social-feed
+      - NODE_ENV="development"
+      - NODE_PORT=8080
+    command: npm start
+    links:
+      - mongodb
+  mongodb:
+    container_name: mongodb
+    image: mongo
+    environment:
+      - MONGO_USER=root
+      - MONGODB_PASS=root
+      - MONGODB_DATABASE=social-feed
+    ports:
+      - 27017:27017
+      - 28017:28017
