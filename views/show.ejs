@@ -44,9 +44,9 @@
             </div>
             <div class="row _icons">
                 <i class="fa <%= post.liked ? "fa-thumbs-up" : "fa-thumbs-o-up" %> fa-2x _like" name="like<%= post.id %>"></i> 
-                <a href="/reply/<%= post.id %>" class="fa fa-reply fa-2x"></a>
+                <a href="/reply/<%= post.id %>?type=<%= post.network.icon%>" class="fa fa-reply fa-2x"></a>
                 <% if(!post.share) { %>
-                  <a href="/share/<%= post.id %>" class="fa fa-share-square-o fa-2x _share"></a>
+                  <a href="/share/<%= post.id %>?type=<%= post.network.icon%>" class="fa fa-share-square-o fa-2x _share"></a>
                 <% }else{ %>
                   <i class="fa fa-share-square fa-2x _unshare <%= post.network.icon%>" name="<%= post.id %>"></i>
                 <% } %> 

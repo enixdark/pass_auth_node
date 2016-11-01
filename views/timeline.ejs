@@ -23,7 +23,8 @@
             <i class="fa fa-pencil-square-o"></i>&nbsp;&nbsp;&nbsp;Compose
         </a>
         <a href="/profile" class="btn btn-default btn-sm">Profile</a>
-        <a href="/logout" class="btn btn-default btn-sm">Logout</a><br><br>
+        <a href="/logout" class="btn btn-default btn-sm">Logout</a>
+        <button class="btn btn-default btn-sm _next">Next</button><br><br>
     </div>
 
     <% if (typeof message !== 'undefined' && message.length > 0) { %>
@@ -44,10 +45,10 @@
                     </p>
                 </div>
                 <div class="row _icons">
-                    <i class="fa <%= post.liked ? "fa-thumbs-up" : "fa-thumbs-o-up" %> fa-2x _like" name="like<%= post.id %>"></i> 
-                    <a href="/reply/<%= post.id %>" class="fa fa-reply fa-2x"></a>
+                    <i class="fa <%= post.liked ? "fa-thumbs-up" : "fa-thumbs-o-up" %> fa-2x _like <%= post.network.icon %>" name="like<%= post.id %>"></i> 
+                    <a href="/reply/<%= post.id %>?type=<%= post.network.icon%>" class="fa fa-reply fa-2x"></a>
                     <% if(!post.share) { %>
-                      <a href="/share/<%= post.id %>" class="fa fa-share-square-o fa-2x _share"></a>
+                      <a href="/share/<%= post.id %>?type=<%= post.network.icon%>" class="fa fa-share-square-o fa-2x _share"></a>
                     <% }else{ %>
                       <i class="fa fa-share-square fa-2x _unshare <%= post.network.icon%>" name="<%= post.id %>"></i>
                     <% } %> 
@@ -55,9 +56,7 @@
                 </div>
             </div>
             <div class="col-xs-2">
-              <a href="/post/<%= post.id %>" class="btn <%= post.network.class %>">
-                <span class="fa fa-<%= post.network.icon %>"></span> <%= post.network.name %>
-              </a>
+                <span class="btn <%= post.network.class %>"><span class="fa fa-<%= post.network.icon %>"></span> <%= post.network.name %></a>
             </div>
         </div>
     <% } %>
@@ -96,15 +95,23 @@
 </body>
 <script>
     $(function() {
+        var posts = <%- JSON.stringify(posts) %>
         $('._like').click(function() {
           var $this = $(this)
           var id = $this.attr('name').replace('like', '')
+          var type = undefined
           $this.toggleClass('fa-thumbs-o-up')
           $this.toggleClass('fa-thumbs-up')
+          if($this.hasClass('facebook')){
+            type = "facebook"
+          }
+          else if($this.hasClass('twitter')){
+            type = "twitter"
+          }
           if ($this.hasClass('fa-thumbs-up')) {
-              $.post('like/' + id)
+              $.post('like/' + id + "?type=" + type)
           } else {
-              $.post('unlike/' + id)
+              $.post('unlike/' + id + "?type=" + type)
           }
         })
         $('._delete').click(function(){
@@ -128,6 +135,21 @@
             $.post('unshare/' + id +"?type=twitter")
           }
           $this.replaceWith('<a href="/share/' + id + '" class="fa fa-share-square-o fa-2x _share"></a>')
+        })
+        $('._next').click(function(){
+          console.log(posts)
+          // var response = $.ajax({
+          //   url: '/fetch/twitter',
+          //   type: 'GET',
+          //   dataType: 'json'
+          // })
+          // .done(function(data) {
+          //   console.log(data);
+          // })
+          // .fail(function() {
+          //   console.log("error");
+          // })
+          // $('div.row.well').after(t)
         })
     })
 </script>

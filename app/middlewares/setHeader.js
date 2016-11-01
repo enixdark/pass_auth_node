@@ -16,6 +16,10 @@ module.exports = (app) => {
       FB.setAccessToken(user.facebook.token)
       // FB.options({version: 'v2.8'})
       req.facebookClient = FB
+      let profile = await new Promise((resolve, reject) => req.facebookClient.api(
+        `/${req.user.facebook.id}/?fields=picture,name`, 'get', resolve))
+      req.facebook_picture = profile.picture.data.url
+      req.facebook_profile_name = profile.name
     }
     return next()
   })

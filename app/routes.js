@@ -10,7 +10,6 @@ module.exports = (app) => {
   let scope = ['email','user_posts','publish_actions']
 
   app.get('/', (req, res) => {
-    console.log('test\n\n')
     res.render('index.ejs', {message: req.flash('error')})
   })
 
@@ -67,18 +66,18 @@ module.exports = (app) => {
   app.get('/timeline', isLoggedIn, setHeader(app), then(async (req, res) => {
     let [fb_datas, tweet_datas] = [[],[]]
     if(req.facebookClient){
-      let profile = await new Promise((resolve, reject) => req.facebookClient.api(
-        `/${req.user.facebook.id}/?fields=picture,name`, 'get', resolve))
+      // let profile = await new Promise((resolve, reject) => req.facebookClient.api(
+      //   `/${req.user.facebook.id}/?fields=picture,name`, 'get', resolve))
 
       let response = await new Promise((resolve, reject) => req.facebookClient.api(
         `/${req.user.facebook.id}/feed?fields=likes.limit(0).summary(true),message,updated_time`, 'get', resolve))
       fb_datas = response.data.map( feed => {
         return {
           id: feed.id,
-          image: profile.picture.data.url,
+          image: req.facebook_picture,
           text: feed.message,
-          name: profile.name,
-          username: `@${profile.name}`,
+          name: req.facebook_profile_name,
+          username: `@${req.facebook_profile_name}`,
           liked: feed.likes.summary.has_liked,
           timestamp: feed.updated_time,
           share: false,
@@ -91,9 +90,7 @@ module.exports = (app) => {
       })
     }
     if(req.twitterClient){
-      let tweets = await req.twitterClient.promise.get('statuses/user_timeline', { count: 100})
-      debugger
-
+      let tweets = await req.twitterClient.promise.get('statuses/user_timeline', { count: 50})
       tweet_datas = tweets.map( tweet => {
         return {
           id: tweet.id_str,
@@ -139,9 +136,8 @@ module.exports = (app) => {
       await req.twitterClient.promise.post('/statuses/update', {status})
     }
     if(req.body.fb){
-      let response = await new Promise((resolve, reject) => req.facebookClient.api(
+      await new Promise((resolve, reject) => req.facebookClient.api(
         `/${req.user.facebook.id}/feed`, 'post', { message: status },  resolve))
-      debugger
 
     }
     res.redirect('/timeline')
@@ -150,7 +146,11 @@ module.exports = (app) => {
   app.post('/like/:id', isLoggedIn, setHeader(app), then(async (req, res) => {
     try{
       let id = req.params.id
-      await req.twitterClient.promise.post('favorites/create', {id: id})
+      if(req.query.type == "twitter")
+        await req.twitterClient.promise.post('favorites/create', {id: id})
+      if(req.query.type == "facebook")
+        await new Promise((resolve, reject) => req.facebookClient.api(
+          `/${id}/likes`, 'post',  resolve))
       res.end()
     }catch(e){
       console.log(e, e.message)
@@ -159,7 +159,11 @@ module.exports = (app) => {
 
   app.post('/unlike/:id', isLoggedIn, setHeader(app), then(async (req, res) => {
     let id = req.params.id
-    await req.twitterClient.promise.post('favorites/destroy', {id: id})
+    if(req.query.type == "twitter")
+      await req.twitterClient.promise.post('favorites/destroy', {id: id})
+    if(req.query.type == "facebook")
+      await new Promise((resolve, reject) => req.facebookClient.api(
+        `/${id}/likes`, 'delete',  resolve))
     res.end()
   }))
 
@@ -197,23 +201,49 @@ module.exports = (app) => {
   }))
 
   app.get('/share/:id', isLoggedIn, setHeader(app), then(async (req, res) => {
-    let tweet = await req.twitterClient.promise.get('statuses/show', {id: req.params.id})
-    // await req.twitterClient.promise.post('statuses/retweet', {id: req.params.id})
-    res.render('share.ejs', 
-      {post: {
-        id: tweet.id_str,
-        image: tweet.user.profile_image_url,
-        text: tweet.text,
-        name: tweet.user.name,
-        username: `@${tweet.user.screen_name}`,
-        liked: tweet.favorited,
-        network: {
-            icon: 'twitter',
-            name: 'Twitter',
-            class: 'btn-info'
+    if(req.query.type == "twitter"){
+      let tweet = await req.twitterClient.promise.get('statuses/show', {id: req.params.id})
+      res.render('share.ejs', 
+        {post: {
+          id: tweet.id_str,
+          image: tweet.user.profile_image_url,
+          text: tweet.text,
+          name: tweet.user.name,
+          username: `@${tweet.user.screen_name}`,
+          liked: tweet.favorited,
+          network: {
+              icon: 'twitter',
+              name: 'Twitter',
+              class: 'btn-info'
+            }
+          }
+        })
+    }
+    else if(req.query.type == "facebook"){
+      let response = await new Promise((resolve, reject) => req.facebookClient.api(
+        `/${req.params.id}?fields=likes.limit(0).summary(true),message,updated_time`, 'get', resolve))
+      return res.render('share.ejs',{
+        post: {
+          id: response.id,
+          image: req.facebook_picture,
+          text: response.message,
+          name: req.facebook_profile_name,
+          username: `@${req.facebook_profile_name}`,
+          liked: response.likes.summary.has_liked,
+          timestamp: response.updated_time,
+          share: false,
+          network: {
+            icon: 'facebook',
+            name: 'Facebook',
+            class: 'btn-primary'
           }
         }
       })
+    }
+    else{
+        req.flash('error', 'cannot view page')
+        res.redirect('/timeline')
+    }
   }))
 
   app.post('/share/:id', isLoggedIn, setHeader(app), then(async (req, res) => {
@@ -224,13 +254,18 @@ module.exports = (app) => {
     if(!status){
       req.flash('error', 'Status is cannot empty')
     }
-    await req.twitterClient.promise.post('statuses/retweet', { status: status, id: req.params.id})
+    if(req.params.twitter)
+      await req.twitterClient.promise.post('statuses/retweet', { status: status, id: req.params.id})
+    else if(req.params.facebook)
+      await new Promise((resolve, reject) => req.facebookClient.api(
+        `/${id}/sharedposts`, 'post' , { message: status },  resolve))
     res.redirect('/timeline')
   }))
 
   app.post('/delete/:id', isLoggedIn, setHeader(app), then(async (req, res) => {
     if(req.query.type == "facebook"){
-
+      await new Promise((resolve, reject) => req.facebookClient.api(
+        `/${req.params.id}`, 'delete',  resolve))
     }
     else if(req.query.type == "twitter"){
       await req.twitterClient.promise.post('statuses/destroy', {id: req.params.id})
@@ -265,6 +300,29 @@ module.exports = (app) => {
           }
         }
       })
+  }))
+
+  app.get('/fetch/twitter', isLoggedIn, setHeader(app), then(async (req, res) => {
+    let tweets = await req.twitterClient.promise.get('statuses/user_timeline', { count: 50})
+    let tweet_datas = tweets.map( tweet => {
+      return {
+        id: tweet.id_str,
+        image: tweet.user.profile_image_url,
+        text: tweet.text,
+        name: tweet.user.name,
+        username: `@${tweet.user.screen_name}`,
+        liked: tweet.favorited,
+        timestamp: tweet.user.created_at,
+        share: tweet.retweeted_status ? true : false,
+        network: {
+          icon: 'twitter',
+          name: 'Twitter',
+          class: 'btn-info'
+        }
+      }
+    })
+
+    return res.json(tweet_datas)
   }))
 
   R.forEach( item => {
