@@ -1,8 +1,8 @@
 module.exports = {
   "development":{
     facebook: {
-      consumerKey: '206197936484724',
-      consumerSecret: '7b49000810aa01e21757303b00277d35',
+      consumerKey: '207906129647238',
+      consumerSecret: '605c638c13672249db4b06b60ed5cfa8',
       callbackUrl: 'http://socialauthenticator.com:8080/auth/facebook/callback'
     },
     twitter:{

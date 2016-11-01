@@ -2,8 +2,12 @@
 <html>
 <head>
     <title>Social Authenticator</title>
-    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+    <style>
     <style>
         body { padding-top:80px; word-wrap:break-word; }
         a.fa, a.fa:visited, a.fa:hover, a.fa:active { color: inherit; }
@@ -25,17 +29,38 @@
 
     <div class="row">
         <form method="post" action="/compose">
-            <div class="form-group">
+          <div class="row">
+            <div class="col-lg-10">
+              <div class="form-group">
                 <textarea name="reply" class="form-control" rows="3" placeholder="Compose your post here..."></textarea>
+              </div>
             </div>
-            <button type="submit" class="btn btn-default">Post</button>
+            <div class="col-lg-2">
+                <div class="form-group">
+                <p>
+                <button type="button" name="facebook" class="form-control btn btn-primary fa fa-facebook" data-toggle="button" aria-pressed="false" autocomplete="off">
+                  Facebook
+                </button>
+                </p>
+                <p>
+                <button class="form-control btn btn-info fa fa-twitter" name="twitter" data-toggle="button" aria-pressed="false" autocomplete="off"> 
+                  Twitter
+                </button>
+                </p>
+                </div>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-default">Post</button>
+          <input style="display: none;" name="fb" class="fb" display="none" type="checkbox" value="true" checked="checked" />
+          <input style="display: none;" name="tw" class="tw" display="none" type="checkbox" value="true" checked="checked" />
         </form>
     </div>
 </div>
 </body>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
 <script>
     $(function() {
+        $(".fb").prop('checked',false)
+        $(".tw").prop('checked',false)
         $('._like').click(function() {
             var $this = $(this)
             var id = $this.attr('name').replace('like', '')
@@ -47,6 +72,24 @@
                 $.post('unlike/' + id)
             }
         })
+        // $(".fb").is(':checked')
+        $('button.fa.fa-facebook').click(function() {
+          if($('button.fa.fa-facebook').attr('aria-pressed') == "false"){
+            $(".fb").prop('checked',true)
+          }
+          else{
+            $(".fb").prop('checked',false)
+          }
+        })
+        $('button.fa.fa-twitter').click(function() {
+          if($('button.fa.fa-twitter').attr('aria-pressed') == "false"){
+            $(".tw").prop('checked',true)
+          }
+          else{
+            $(".tw").prop('checked',false)
+          }
+        })
     })
 </script>
 </html>
+

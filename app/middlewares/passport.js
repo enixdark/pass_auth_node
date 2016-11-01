@@ -116,7 +116,7 @@ function configure(CONFIG) {
   loadPassportStrategy(FacebookStrategy, {
     clientID: CONFIG.facebook.consumerKey,
     clientSecret: CONFIG.facebook.consumerSecret,
-    callbackURL: CONFIG.facebook.callbackUrl
+    callbackURL: CONFIG.facebook.callbackUrl,
   }, 'facebook')
 
   loadPassportStrategy(TwitterStrategy, {

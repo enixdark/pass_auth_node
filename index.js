@@ -33,7 +33,6 @@ app.use(bodyParser.urlencoded({ extended: true }))
 app.use(paginate.middleware(10, 20))
 app.set('views', path.join(__dirname, 'views'))
 app.set('view engine', 'ejs') // set up ejs for templating
-debugger
 app.paginate = paginate
 
 

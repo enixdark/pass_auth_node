@@ -7,7 +7,7 @@ let then = require('express-then')
 let posts = require('../data/posts')
 module.exports = (app) => {
   let passport = app.passport
-  let scope = 'email'
+  let scope = ['email','user_posts','publish_actions']
 
   app.get('/', (req, res) => {
     console.log('test\n\n')
@@ -65,21 +65,54 @@ module.exports = (app) => {
   })
 
   app.get('/timeline', isLoggedIn, setHeader(app), then(async (req, res) => {
+    let [fb_datas, tweet_datas] = [[],[]]
+    if(req.facebookClient){
+      let profile = await new Promise((resolve, reject) => req.facebookClient.api(
+        `/${req.user.facebook.id}/?fields=picture,name`, 'get', resolve))
 
-    let tweets = await req.twitterClient.promise.get('statuses/user_timeline', { count: 100})
-    debugger
-    let datas = tweets.map( tweet => {
-      return {
-        id: tweet.id_str,
-        image: tweet.user.profile_image_url,
-        text: tweet.text,
-        name: tweet.user.name,
-        username: `@${tweet.user.screen_name}`,
-        liked: tweet.favorited
-      }
-    })
+      let response = await new Promise((resolve, reject) => req.facebookClient.api(
+        `/${req.user.facebook.id}/feed?fields=likes.limit(0).summary(true),message,updated_time`, 'get', resolve))
+      fb_datas = response.data.map( feed => {
+        return {
+          id: feed.id,
+          image: profile.picture.data.url,
+          text: feed.message,
+          name: profile.name,
+          username: `@${profile.name}`,
+          liked: feed.likes.summary.has_liked,
+          timestamp: feed.updated_time,
+          network: {
+            icon: 'facebook',
+            name: 'Facebook',
+            class: 'btn-primary'
+          }
+        }
+      })
+    }
+    if(req.twitterClient){
+      let tweets = await req.twitterClient.promise.get('statuses/user_timeline', { count: 100})
+      tweet_datas = tweets.map( tweet => {
+        return {
+          id: tweet.id_str,
+          image: tweet.user.profile_image_url,
+          text: tweet.text,
+          name: tweet.user.name,
+          username: `@${tweet.user.screen_name}`,
+          liked: tweet.favorited,
+          timestamp: tweet.user.created_at,
+          network: {
+            icon: 'twitter',
+            name: 'Twitter',
+            class: 'btn-info'
+          }
+        }
+      })
+    }
+    let datas = Array.concat(fb_datas,tweet_datas)
+                 .sort( (a,b) => new Date(a.timestamp) - new Date(b.timestamp) )
+                 .reverse()
     res.render('timeline.ejs',{
-      posts: datas.slice((req.query.page - 1)*20,20),
+      posts: datas.slice((req.query.page - 1)*20,req.query.page * 20),
       pageCount: Math.ceil(datas.length/20),
       itemCount: 20,
       pages: app.paginate.getArrayPages(req)(3, Math.ceil(datas.length/20), req.query.page)
@@ -98,7 +131,15 @@ module.exports = (app) => {
     if(!status){
       req.flash('error', 'Status is cannot empty')
     }
-    await req.twitterClient.promise.post('/statuses/update', {status})
+    if(req.body.tw){
+      await req.twitterClient.promise.post('/statuses/update', {status})
+    }
+    if(req.body.fb){
+      let response = await new Promise((resolve, reject) => req.facebookClient.api(
+        `/${req.user.facebook.id}/feed`, 'post', { message: status },  resolve))
+      debugger
+
+    }
     res.redirect('/timeline')
   }))
 
@@ -133,6 +174,7 @@ module.exports = (app) => {
   }))
 
   app.post('/reply/:id', isLoggedIn, setHeader(app), then(async (req, res) => {
+    let tweet = await req.twitterClient.promise.get('statuses/show', {id: req.params.id})
     let status = req.body.reply
     if(status.length > 140){
       return req.flash('error', 'Status is over 140 characters')
@@ -140,7 +182,7 @@ module.exports = (app) => {
     if(!status){
       req.flash('error', 'Status is cannot empty')
     }
-    await req.twitterClient.promise.post('statuses/update', {status: status, 
+    await req.twitterClient.promise.post('statuses/update', {status: `${tweet.user.name} ${status}`,
                                                              in_reply_to_status_id: req.params.id})
     res.redirect('/timeline')
   }))
@@ -172,10 +214,14 @@ module.exports = (app) => {
     res.redirect('/timeline')
   }))
 
-  R.forEach( item => {
-    scope = item == 'linkedin' ? 'r_emailaddress' : 'email'
+  app.post('/delete/:id', isLoggedIn, setHeader(app), then(async (req, res) => {
+    res.end()
+  }))
 
-    app.get(`/auth/${item}`, passport.authenticate(item, {scope}))
+  R.forEach( item => {
+    // scope = item == 'linkedin' ? 'r_emailaddress' : ['email','read_stream']
+
+    app.get(`/auth/${item}`, passport.authenticate(item, {scope: scope}))
     app.get(`/auth/${item}/callback`, passport.authenticate(item, {
       successRedirect: '/timeline',
       failureRedirect: '/timeline',
@@ -183,7 +229,7 @@ module.exports = (app) => {
     }))
 
     // Authorization route & Callback URL
-    app.get(`/connect/${item}`, passport.authorize(item, {scope}))
+    app.get(`/connect/${item}`, passport.authorize(item, {scope: scope}))
     app.get(`/connect/${item}/callback`, passport.authorize(item, {
       successRedirect: '/profile',
       failureRedirect: '/profile',
@@ -193,6 +239,7 @@ module.exports = (app) => {
     app.get(`/unlink/${item}`, then(async (req, res) => {
       let user  = req.user
       user[item].token = null
+      req[`${item}Client`] = null
       await user.save()
       res.redirect('/profile')
     }))
