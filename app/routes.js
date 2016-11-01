@@ -81,6 +81,7 @@ module.exports = (app) => {
           username: `@${profile.name}`,
           liked: feed.likes.summary.has_liked,
           timestamp: feed.updated_time,
+          share: false,
           network: {
             icon: 'facebook',
             name: 'Facebook',
@@ -91,6 +92,8 @@ module.exports = (app) => {
     }
     if(req.twitterClient){
       let tweets = await req.twitterClient.promise.get('statuses/user_timeline', { count: 100})
+      debugger
+
       tweet_datas = tweets.map( tweet => {
         return {
           id: tweet.id_str,
@@ -100,6 +103,7 @@ module.exports = (app) => {
           username: `@${tweet.user.screen_name}`,
           liked: tweet.favorited,
           timestamp: tweet.user.created_at,
+          share: tweet.retweeted_status ? true : false,
           network: {
             icon: 'twitter',
             name: 'Twitter',
@@ -220,6 +224,16 @@ module.exports = (app) => {
     }
     else if(req.query.type == "twitter"){
       await req.twitterClient.promise.post('statuses/destroy', {id: req.params.id})
+    }
+    res.end()
+  }))
+
+  app.post('/unshare/:id', isLoggedIn, setHeader(app), then(async (req, res) => {
+    if(req.query.type == "facebook"){
+
+    }
+    else if(req.query.type == "twitter"){
+      await req.twitterClient.promise.post('statuses/unretweet', {id: req.params.id})
     }
     res.end()
   }))
