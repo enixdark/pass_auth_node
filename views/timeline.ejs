@@ -158,7 +158,7 @@
 
             data.reverse().forEach(function(elem) {
               if(new_keys.has(elem.id)){
-                $('div.row.well').before(
+                $('div.row.well').first().before(
                   `
                   <div class="row well">
                     <div class="col-xs-1">
