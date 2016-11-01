@@ -215,12 +215,17 @@ module.exports = (app) => {
   }))
 
   app.post('/delete/:id', isLoggedIn, setHeader(app), then(async (req, res) => {
+    if(req.query.type == "facebook"){
+
+    }
+    else if(req.query.type == "twitter"){
+      await req.twitterClient.promise.post('statuses/destroy', {id: req.params.id})
+    }
     res.end()
   }))
 
   R.forEach( item => {
-    // scope = item == 'linkedin' ? 'r_emailaddress' : ['email','read_stream']
-
+    scope = item == 'linkedin' ? 'r_emailaddress' : 'email'
     app.get(`/auth/${item}`, passport.authenticate(item, {scope: scope}))
     app.get(`/auth/${item}/callback`, passport.authenticate(item, {
       successRedirect: '/timeline',
