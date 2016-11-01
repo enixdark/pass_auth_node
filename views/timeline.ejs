@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/es6-shim/0.35.1/es6-shim.min.js" crossorigin="anonymous"></script>
     <style>
     <style>
         body { padding-top:80px; word-wrap:break-word; }
@@ -38,6 +39,7 @@
                 <img src="<%= post.image %>"/>
             </div>
             <div class="col-lg-9">
+                <%= post.timestamp %>
                 <div class="row">
                     <p>
                         <strong><%= post.name %></strong> <%= post.username %><br>
@@ -143,18 +145,54 @@
             dataType: 'json'
           })
           .done(function(data) {
-            var keys_post = posts.map(function(index, elem) {
+
+            var key_posts = new Set(posts.map(function(elem, index) {
               return elem.id
-            })
-            var key_news = data.map(function(index, elem) {
+            }))
+            var key_response = new Set(data.map(function(elem, index) {
               return elem.id
+            }))
+            var new_keys = new Set(Array.from(key_response).filter(function( elem ){
+              return !key_posts.has(elem)
+            }))
+
+            data.reverse().forEach(function(elem) {
+              if(new_keys.has(elem.id)){
+                $('div.row.well').before(
+                  `
+                  <div class="row well">
+                    <div class="col-xs-1">
+                      <img src="${elem.image}"/>
+                    </div>
+                    <div class="col-lg-9">
+                      <div class="row">
+                        <p>
+                          <strong>${elem.name}</strong> ${elem.username}<br>
+                          ${elem.text}
+                        </p>
+                      </div>
+                      <div class="row _icons">
+                        <i class="fa ${elem.liked ? "fa-thumbs-up" : "fa-thumbs-o-up"} fa-2x _like ${elem.network.icon}" 
+                        name="like${elem.id}"></i> 
+                        <a href="/reply/${ elem.id }?type=${elem.network.icon}" class="fa fa-reply fa-2x"></a>
+                        ${ elem.share ? '<a href="/share/${elem.id}?type=${elem.network.icon}" class="fa fa-share-square-o fa-2x _share"></a>' : '<i class="fa fa-share-square fa-2x _unshare ${elem.network.icon}" name="${elem.id}"></i>'
+                        }
+                            <i name="delete${elem.id}" class="fa fa-times fa-2x _delete ${elem.network.icon} ${elem.id}"></i>
+                          </div>
+                        </div>
+                        <div class="col-xs-2">
+                          <span class="btn ${elem.network.class}"><span class="fa fa-${elem.network.icon}"></span> ${elem.network.name}</a>
+                        </div>
+                      </div>
+                    `
+                )
+              }
             })
-            
           })
           .fail(function() {
             console.log("error");
           })
-          $('div.row.well').after(t)
+          // $('div.row.well').after(t)
         })
     })
 </script>

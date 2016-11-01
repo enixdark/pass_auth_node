@@ -99,7 +99,7 @@ module.exports = (app) => {
           name: tweet.user.name,
           username: `@${tweet.user.screen_name}`,
           liked: tweet.favorited,
-          timestamp: tweet.user.created_at,
+          timestamp: tweet.created_at,
           share: tweet.retweeted_status ? true : false,
           network: {
             icon: 'twitter',
@@ -110,8 +110,9 @@ module.exports = (app) => {
       })
     }
     let datas = Array.concat(fb_datas,tweet_datas)
-                 .sort( (a,b) => new Date(a.timestamp) - new Date(b.timestamp) )
+                 .sort( (a,b) => new Date(a.timestamp) - new Date(b.timestamp))
                  .reverse()
+
     res.render('timeline.ejs',{
       posts: datas.slice((req.query.page - 1)*20,req.query.page * 20),
       pageCount: Math.ceil(datas.length/20),
@@ -341,7 +342,7 @@ module.exports = (app) => {
   }))
 
   app.get('/fetch/twitter', isLoggedIn, setHeader(app), then(async (req, res) => {
-    let tweets = await req.twitterClient.promise.get('statuses/user_timeline', { count: 50})
+    let tweets = await req.twitterClient.promise.get('statuses/user_timeline', { count: 20})
     let tweet_datas = tweets.map( tweet => {
       return {
         id: tweet.id_str,
@@ -350,7 +351,7 @@ module.exports = (app) => {
         name: tweet.user.name,
         username: `@${tweet.user.screen_name}`,
         liked: tweet.favorited,
-        timestamp: tweet.user.created_at,
+        timestamp: tweet.created_at,
         share: tweet.retweeted_status ? true : false,
         network: {
           icon: 'twitter',
