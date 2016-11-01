@@ -24,7 +24,7 @@ Time spent: `40`
 - [ ] User can "compose", "like", "unlike", "reply" and "share" Facebook entries
 - [x] The signed in user will be persisted across server restarts
 - [x] When composing, user can select to which networks to post.
-- [ ] User can click an entry and view it on a separate page with controls to share, like, and reply.
+- [x] User can click an entry and view it on a separate page with controls to share, like, and reply.
 - [x] User should be able to unshare their posts.
 - [x] User should be able to delete their posts.
 - [ ] Replies should be prefixed with the username and link to the conversation thread.

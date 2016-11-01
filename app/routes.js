@@ -172,7 +172,12 @@ module.exports = (app) => {
         text: tweet.text,
         name: tweet.user.name,
         username: `@${tweet.user.screen_name}`,
-        liked: tweet.favorited
+        liked: tweet.favorited,
+        network: {
+            icon: 'twitter',
+            name: 'Twitter',
+            class: 'btn-info'
+          }
         }
       })
   }))
@@ -201,7 +206,12 @@ module.exports = (app) => {
         text: tweet.text,
         name: tweet.user.name,
         username: `@${tweet.user.screen_name}`,
-        liked: tweet.favorited
+        liked: tweet.favorited,
+        network: {
+            icon: 'twitter',
+            name: 'Twitter',
+            class: 'btn-info'
+          }
         }
       })
   }))
@@ -236,6 +246,25 @@ module.exports = (app) => {
       await req.twitterClient.promise.post('statuses/unretweet', {id: req.params.id})
     }
     res.end()
+  }))
+
+  app.get('/post/:id', isLoggedIn, setHeader(app), then(async (req, res) => {
+    let tweet = await req.twitterClient.promise.get('statuses/show', {id: req.params.id})
+    res.render('show.ejs', 
+      {post: {
+        id: tweet.id_str,
+        image: tweet.user.profile_image_url,
+        text: tweet.text,
+        name: tweet.user.name,
+        username: `@${tweet.user.screen_name}`,
+        liked: tweet.favorited,
+        network: {
+            icon: 'twitter',
+            name: 'Twitter',
+            class: 'btn-info'
+          }
+        }
+      })
   }))
 
   R.forEach( item => {
