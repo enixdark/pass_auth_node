@@ -52,6 +52,7 @@
                 <textarea name="reply" class="form-control" rows="3" placeholder="Your reply here..."></textarea>
             </div>
             <button type="submit" class="btn btn-default">Reply</button>
+            <input style="display: none;" name="<%= post.network.icon %>" class="checkbox <%= post.network.icon %>" display="none" type="checkbox" value="true" checked="checked" />
         </form>
     </div>
 </div>
@@ -70,6 +71,7 @@
                 $.post('unlike/' + id)
             }
         })
+        $('.checkbox').prop('checked',true)
     })
 </script>
 </html>

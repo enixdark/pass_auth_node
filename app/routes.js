@@ -168,22 +168,49 @@ module.exports = (app) => {
   }))
 
   app.get('/reply/:id', isLoggedIn, setHeader(app), then(async (req,res) => {
-    let tweet = await req.twitterClient.promise.get('statuses/show', {id: req.params.id})
-    res.render('reply.ejs', 
-      {post: {
-        id: tweet.id_str,
-        image: tweet.user.profile_image_url,
-        text: tweet.text,
-        name: tweet.user.name,
-        username: `@${tweet.user.screen_name}`,
-        liked: tweet.favorited,
-        network: {
-            icon: 'twitter',
-            name: 'Twitter',
-            class: 'btn-info'
+    if(req.query.type == "twitter"){
+      let tweet = await req.twitterClient.promise.get('statuses/show', {id: req.params.id})
+      res.render('share.ejs', 
+        {post: {
+          id: tweet.id_str,
+          image: tweet.user.profile_image_url,
+          text: tweet.text,
+          name: tweet.user.name,
+          username: `@${tweet.user.screen_name}`,
+          liked: tweet.favorited,
+          network: {
+              icon: 'twitter',
+              name: 'Twitter',
+              class: 'btn-info'
+            }
+          }
+        })
+    }
+    else if(req.query.type == "facebook"){
+      let response = await new Promise((resolve, reject) => req.facebookClient.api(
+        `/${req.params.id}?fields=likes.limit(0).summary(true),message,updated_time`, 'get', resolve))
+      return res.render('share.ejs',{
+        post: {
+          id: response.id,
+          image: req.facebook_picture,
+          text: response.message,
+          name: req.facebook_profile_name,
+          username: `@${req.facebook_profile_name}`,
+          liked: response.likes.summary.has_liked,
+          timestamp: response.updated_time,
+          share: false,
+          network: {
+            icon: 'facebook',
+            name: 'Facebook',
+            class: 'btn-primary'
           }
         }
       })
+    }
+    else{
+        req.flash('error', 'cannot view page')
+        res.redirect('/timeline')
+    }
   }))
 
   app.post('/reply/:id', isLoggedIn, setHeader(app), then(async (req, res) => {
@@ -195,9 +222,18 @@ module.exports = (app) => {
     if(!status){
       req.flash('error', 'Status is cannot empty')
     }
-    await req.twitterClient.promise.post('statuses/update', {status: `${tweet.user.name} ${status}`,
+    if(req.body.twitter){
+      await req.twitterClient.promise.post('statuses/update', {status: `${tweet.user.name} ${status}`,
                                                              in_reply_to_status_id: req.params.id})
+    }
+    else if(req.body.facebook){
+      let response = await new Promise((resolve, reject) => req.facebookClient.api(
+        `/${req.params.id}/comments`, 'post' , { message: status },  resolve))
+    }
+    
     res.redirect('/timeline')
+
+
   }))
 
   app.get('/share/:id', isLoggedIn, setHeader(app), then(async (req, res) => {
@@ -254,11 +290,13 @@ module.exports = (app) => {
     if(!status){
       req.flash('error', 'Status is cannot empty')
     }
-    if(req.params.twitter)
+    if(req.body.twitter){
       await req.twitterClient.promise.post('statuses/retweet', { status: status, id: req.params.id})
-    else if(req.params.facebook)
-      await new Promise((resolve, reject) => req.facebookClient.api(
-        `/${id}/sharedposts`, 'post' , { message: status },  resolve))
+    }
+    else if(req.body.facebook){
+      let response = await new Promise((resolve, reject) => req.facebookClient.api(
+        `/${req.params.id}/sharedposts`, 'post' , { message: status },  resolve))
+    }
     res.redirect('/timeline')
   }))
 

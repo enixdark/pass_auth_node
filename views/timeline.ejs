@@ -137,19 +137,24 @@
           $this.replaceWith('<a href="/share/' + id + '" class="fa fa-share-square-o fa-2x _share"></a>')
         })
         $('._next').click(function(){
-          console.log(posts)
-          // var response = $.ajax({
-          //   url: '/fetch/twitter',
-          //   type: 'GET',
-          //   dataType: 'json'
-          // })
-          // .done(function(data) {
-          //   console.log(data);
-          // })
-          // .fail(function() {
-          //   console.log("error");
-          // })
-          // $('div.row.well').after(t)
+          var response = $.ajax({
+            url: '/fetch/twitter',
+            type: 'GET',
+            dataType: 'json'
+          })
+          .done(function(data) {
+            var keys_post = posts.map(function(index, elem) {
+              return elem.id
+            })
+            var key_news = data.map(function(index, elem) {
+              return elem.id
+            })
+            
+          })
+          .fail(function() {
+            console.log("error");
+          })
+          $('div.row.well').after(t)
         })
     })
 </script>
