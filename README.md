@@ -2,7 +2,7 @@
 
 This is a aggregated Social Feed app for consuming Twitter and Facebook in a single timeline.
 
-Time spent: `<Number of hours spent>`
+Time spent: `40`
 
 ### Features
 
@@ -32,7 +32,6 @@ Time spent: `<Number of hours spent>`
 
 ### Walkthrough
 
-![Video Walkthrough](...)
-
+![Video Walkthrough](walkthrough.gif)
 
 
